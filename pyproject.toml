@@ -25,7 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 spark = ["pyspark==3.5.7"]
 warehouse = ["dbt-core==1.9.0", "dbt-postgres==1.9.0"]
-dev = ["pytest==8.3.4", "pytest-cov==6.0.0", "ruff==0.9.7", "mypy==1.15.0", "types-PyYAML==6.0.12.20241230"]
+dev = ["pytest==8.3.4", "pytest-cov==6.0.0", "ruff==0.17.4", "mypy==1.15.0", "types-PyYAML==6.0.12.20241230"]
 
 [project.scripts]
 finstream-replay = "ingestion.simulators.replay:main"
