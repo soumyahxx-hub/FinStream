@@ -1,6 +1,6 @@
 # Application-only dependencies. For development use: pip install -e '.[dev]'.
 # Spark and dbt are optional extras because they are run in separate profiles.
-fastapi==0.115.14
+fastapi==0.162.5
 uvicorn[standard]==0.34.0
 pydantic==2.10.6
 pydantic-settings==2.7.1
