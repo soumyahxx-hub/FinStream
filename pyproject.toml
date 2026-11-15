@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-spark = ["pyspark==3.5.7"]
+spark = ["pyspark==4.3.0"]
 warehouse = ["dbt-core==1.9.0", "dbt-postgres==1.9.0"]
 dev = ["pytest==8.3.4", "pytest-cov==6.0.0", "ruff==0.9.7", "mypy==1.15.0", "types-PyYAML==6.0.12.20241230"]
 
