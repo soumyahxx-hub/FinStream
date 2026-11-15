@@ -1,0 +1,1 @@
+"""Canonical, versioned event contracts."""

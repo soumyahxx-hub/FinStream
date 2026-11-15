@@ -1,0 +1,13 @@
+environment: development
+local_profiles:
+  recommended_sequence: [core, streaming, api, spark, monitoring]
+  laptop_ram_gib: 16
+spark:
+  master: local[1]
+  shuffle_partitions: 2
+  driver_memory: 1g
+  executor_memory: 1g
+kafka:
+  replication_factor: 1
+  partitions: 3
+  note: Single-broker development only; not production fault tolerance.

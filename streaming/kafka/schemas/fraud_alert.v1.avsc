@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "FraudAlert",
+  "namespace": "io.finstream.events",
+  "fields": [
+    {"name": "alert_id", "type": "string"},
+    {"name": "event_id", "type": "string"},
+    {"name": "created_at", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "rule_name", "type": "string"},
+    {"name": "risk_score", "type": {"type": "bytes", "logicalType": "decimal", "precision": 5, "scale": 4}},
+    {"name": "severity", "type": "string"},
+    {"name": "explanation", "type": "string"}
+  ]
+}

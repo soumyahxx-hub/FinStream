@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    columns:
+      - name: event_id
+        tests: [not_null, unique]
+      - name: source_system
+        tests:
+          - accepted_values:
+              values: [paysim, ieee_cis, synthetic]
+      - name: amount
+        tests: [not_null]
+  - name: stg_fraud_events
+    columns:
+      - name: alert_id
+        tests: [not_null, unique]
+      - name: event_id
+        tests:
+          - relationships:
+              to: ref('stg_transactions')
+              field: event_id

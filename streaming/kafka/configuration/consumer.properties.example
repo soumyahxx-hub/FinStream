@@ -1,0 +1,4 @@
+enable.auto.commit=false
+isolation.level=read_committed
+auto.offset.reset=earliest
+max.poll.interval.ms=300000

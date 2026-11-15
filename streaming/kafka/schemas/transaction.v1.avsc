@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "TransactionEvent",
+  "namespace": "io.finstream.events",
+  "doc": "Canonical source-preserving transaction contract. Historical label is not an alert or score.",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_version", "type": "int", "default": 1},
+    {"name": "source_system", "type": "string"},
+    {"name": "source_record_id", "type": "string"},
+    {"name": "simulation_id", "type": ["null", "string"], "default": null},
+    {"name": "event_time", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "ingested_at", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "amount", "type": {"type": "bytes", "logicalType": "decimal", "precision": 18, "scale": 2}},
+    {"name": "currency", "type": "string", "default": "INR"},
+    {"name": "transaction_type", "type": ["null", "string"], "default": null},
+    {"name": "origin_account_id", "type": ["null", "string"], "default": null},
+    {"name": "destination_account_id", "type": ["null", "string"], "default": null},
+    {"name": "merchant_id", "type": ["null", "string"], "default": null},
+    {"name": "historical_fraud_label", "type": ["null", "boolean"], "default": null},
+    {"name": "source_attributes_json", "type": "string", "default": "{}"}
+  ]
+}

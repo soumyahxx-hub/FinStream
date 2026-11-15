@@ -1,0 +1,9 @@
+source_system: ieee_cis
+source_url: https://www.kaggle.com/competitions/ieee-fraud-detection
+acquired_at: null
+file_sha256: null
+license_reviewed: false
+reference_time_utc: null
+source_record_identity: TransactionID
+profiling_status: not_started
+notes: Keep transaction and identity files separate until documented profiling maps them.

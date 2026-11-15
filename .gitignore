@@ -1,0 +1,44 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+warehouse/dbt/target/
+warehouse/dbt/logs/
+orchestration/airflow/logs/*
+!orchestration/airflow/logs/.gitkeep
+datasets/raw/*
+!datasets/raw/.gitkeep
+datasets/processed/*
+!datasets/processed/.gitkeep
+datasets/samples/*
+!datasets/samples/.gitkeep
+data/
+checkpoints/
+terraform.tfstate*
+*.tfvars
+.terraform/
+*.zip
+.local/
+warehouse/dbt/profiles.yml
+
+# Spark / Hive generated artifacts
+metastore_db/
+derby.log
+spark-warehouse/
+
+# Additional generated files
+*.log
+.ipynb_checkpoints/
+.DS_Store
+
+# Local dbt user metadata
+warehouse/dbt/.user.yml

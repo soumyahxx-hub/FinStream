@@ -1,0 +1,14 @@
+# Example only. Do not deploy until IAM, encryption, networking, and capacity are reviewed.
+environment: production
+kafka:
+  replication_factor: 3
+  min_insync_replicas: 2
+  tls_required: true
+spark:
+  checkpoint_uri: s3a://REPLACE_ME/checkpoints
+storage:
+  lake_uri: s3a://REPLACE_ME/lake
+  parquet_compression: zstd
+security:
+  secrets_provider: REPLACE_WITH_APPROVED_PROVIDER
+  encryption_at_rest: required

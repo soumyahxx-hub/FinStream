@@ -1,0 +1,57 @@
+
+topics:
+  - name: transactions.raw
+    partitions: 3
+    replication_factor: 1
+    retention_ms: 604800000
+    key: event_id
+    purpose: Source-preserving canonical transaction events before validation.
+    consumer_groups: [finstream-validation-v1]
+    delivery: At-least-once; downstream deduplication is required.
+
+  - name: transactions.validated
+    partitions: 3
+    replication_factor: 1
+    retention_ms: 604800000
+    key: event_id
+    purpose: Contract-valid canonical transaction events.
+    consumer_groups: [finstream-stream, finstream-fraud-detection-v1]
+    delivery: At-least-once; consumers must handle replay safely.
+
+  - name: transactions.rejected
+    partitions: 3
+    replication_factor: 1
+    retention_ms: 1209600000
+    key: event_id
+    purpose: Validation failures with stable event identifiers and rejection reasons.
+    consumer_groups: [finstream-remediation]
+    delivery: At-least-once.
+
+  - name: transactions.enriched
+    partitions: 3
+    replication_factor: 1
+    retention_ms: 604800000
+    key: event_id
+    purpose: Enriched transaction records for downstream consumers.
+    consumer_groups: [finstream-alerting, finstream-lake]
+    delivery: At-least-once; consumers deduplicate by event_id.
+
+  - name: fraud.alerts
+    partitions: 3
+    replication_factor: 1
+    retention_ms: 2592000000
+    key: alert_id
+    purpose: Rule or model-generated operational fraud alerts.
+    consumer_groups: [finstream-api-writer]
+    delivery: At-least-once; downstream persistence must be idempotent.
+
+  - name: transactions.dead-letter
+    partitions: 3
+    replication_factor: 1
+    retention_ms: 2592000000
+    key: event_id
+    purpose: Exhausted retry and deserialization failures; not an automatic discard channel.
+    consumer_groups: [finstream-remediation]
+    delivery: At-least-once with manual replay after remediation.
+
+development_note: Replication factor 1 is intentionally limited to a single-broker laptop profile.

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=75.8,<76"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finstream"
+version = "0.1.0"
+description = "Local-first foundation for reliable financial transaction streaming"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = { text = "MIT" }
+authors = [{ name = "FinStream contributors" }]
+dependencies = [
+  "fastapi==0.115.14",
+  "uvicorn[standard]==0.34.0",
+  "pydantic==2.10.6",
+  "pydantic-settings==2.7.1",
+  "psycopg[binary,pool]==3.2.5",
+  "PyYAML==6.0.2",
+  "structlog==25.1.0",
+  "prometheus-client==0.21.1",
+  "confluent-kafka[avro,schemaregistry]==2.8.2",
+]
+
+[project.optional-dependencies]
+spark = ["pyspark==3.5.7"]
+warehouse = ["dbt-core==1.9.0", "dbt-postgres==1.9.0"]
+dev = ["pytest==8.3.4", "pytest-cov==6.0.0", "ruff==0.9.7", "mypy==1.15.0", "types-PyYAML==6.0.12.20241230"]
+
+[project.scripts]
+finstream-replay = "ingestion.simulators.replay:main"
+finstream-validate = "ingestion.consumers.validation_consumer:main"
+finstream-fraud = "fraud_detection.consumers.alert_customer:main"
+finstream-reconcile = "ingestion.consumers.reconciliation:main"
+finstream-kafka-offsets = "ingestion.consumers.kafka_offset_reconciliation:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "ingestion*", "streaming*", "fraud_detection*", "storage*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --cov=api --cov=ingestion --cov=fraud_detection"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["warehouse/dbt/target"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+exclude = ["warehouse", "orchestration"]

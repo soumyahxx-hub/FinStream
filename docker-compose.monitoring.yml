@@ -1,0 +1,6 @@
+# Optional monitoring override. Combine it with docker-compose.yml.
+services:
+  prometheus:
+    profiles: [monitoring]
+  grafana:
+    profiles: [monitoring]

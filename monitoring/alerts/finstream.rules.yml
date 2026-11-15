@@ -1,0 +1,19 @@
+groups:
+  - name: finstream-foundation
+    rules:
+      - alert: FinStreamApiTargetDown
+        expr: up{job="finstream-api"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: FinStream API scrape target is unavailable
+          runbook: docs/operations/troubleshooting.md
+      - alert: FinStreamApiErrorRate
+        expr: sum(rate(finstream_api_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(finstream_api_requests_total[5m])), 1) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: API server-error rate exceeds five percent
+          runbook: docs/operations/troubleshooting.md

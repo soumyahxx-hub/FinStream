@@ -1,0 +1,17 @@
+source_system: paysim
+source_url: https://www.kaggle.com/datasets/ealaxi/paysim1
+acquired_at: null
+file_sha256: 16910f90577b0d981bf8ff289714510bb89bc71bff7d3f220f024e287e4eea6b
+license_reviewed: false
+simulation_epoch_utc: null
+source_record_identity: null
+profiling_status: completed
+notes: 'Preserve original identifiers and keep raw files outside Git. Profiled: 6,362,620
+  rows, 11 columns, zero missing values. PaySim step is a simulation-hour offset,
+  not a real-world timestamp.'
+profile:
+  row_count: 6362620
+  column_count: 11
+  missing_values_total: 0
+  file_size_bytes: 493534783
+  processing_method: sequential_csv_streaming

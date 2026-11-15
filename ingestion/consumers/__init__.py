@@ -1,0 +1,1 @@
+"""Consumer-side reliability helpers."""

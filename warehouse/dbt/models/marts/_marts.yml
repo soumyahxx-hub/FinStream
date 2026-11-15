@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: fct_transactions
+    columns:
+      - name: event_id
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_fraud_alerts
+    columns:
+      - name: alert_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+
+  - name: mart_customer_risk
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: transaction_count
+        tests:
+          - not_null
+      - name: historical_fraud_count
+        tests:
+          - not_null
+      - name: generated_alert_count
+        tests:
+          - not_null
+
+  - name: mart_historical_customer_risk
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: transaction_count
+        tests:
+          - not_null
+
+  - name: mart_historical_fraud_performance
+    columns:
+      - name: source_system
+        tests:
+          - not_null
+      - name: total_transactions
+        tests:
+          - not_null
+
+  - name: mart_fraud_by_transaction_type
+    columns:
+      - name: transaction_type
+        tests:
+          - not_null
+      - name: total_transactions
+        tests:
+          - not_null
+
+  - name: mart_balance_anomalies
+    columns:
+      - name: event_id
+        tests:
+          - not_null
+          - unique
+      - name: origin_balance_mismatch
+        tests:
+          - not_null
+      - name: historical_outcome
+        tests:
+          - accepted_values:
+              values:
+                - historically_fraud
+                - historically_legitimate
+                - unlabelled

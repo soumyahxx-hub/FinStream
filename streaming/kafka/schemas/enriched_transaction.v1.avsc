@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "EnrichedTransaction",
+  "namespace": "io.finstream.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_time", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "source_system", "type": "string"},
+    {"name": "amount", "type": {"type": "bytes", "logicalType": "decimal", "precision": 18, "scale": 2}},
+    {"name": "risk_band", "type": ["null", "string"], "default": null},
+    {"name": "enriched_at", "type": {"type": "long", "logicalType": "timestamp-millis"}}
+  ]
+}

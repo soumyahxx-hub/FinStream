@@ -1,0 +1,4 @@
+# Terraform plans create no cloud resources until this is set to true.
+deploy_enabled  = false
+aws_region      = "ap-south-1"
+lake_bucket_name = "replace-with-globally-unique-name"

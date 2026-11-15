@@ -1,0 +1,232 @@
+name: finstream
+
+services:
+  postgres:
+    image: postgres:16.6-bookworm
+    profiles: [core, analytics, airflow, api]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?copy .env.example to .env}
+      POSTGRES_USER: ${POSTGRES_USER:?copy .env.example to .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?copy .env.example to .env}
+    ports: ["5432:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/ddl:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 768m
+    cpus: 0.75
+    networks: [finstream]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.8.0
+    profiles: [streaming, spark]
+    hostname: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    ports: ["9092:9092"]
+    volumes: [kafka-data:/var/lib/kafka/data]
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafka:29092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+    mem_limit: 1024m
+    cpus: 1.0
+    networks: [finstream]
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.8.0
+    profiles: [streaming, spark]
+    hostname: schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
+    ports: ["8081:8081"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/subjects >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    mem_limit: 512m
+    cpus: 0.5
+    networks: [finstream]
+
+  init-topics:
+    image: confluentinc/cp-kafka:7.8.0
+    profiles: [streaming, spark]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    volumes:
+      - ./infrastructure/docker/create-topics.sh:/scripts/create-topics.sh:ro
+    command: ["bash", "/scripts/create-topics.sh"]
+    restart: "no"
+    mem_limit: 256m
+    cpus: 0.25
+    networks: [finstream]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: [api]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+    cpus: 0.5
+    networks: [finstream]
+
+  spark:
+    image: apache/spark:3.5.7
+    profiles: [spark]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      init-topics:
+        condition: service_completed_successfully
+    working_dir: /opt/finstream
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPARK_CHECKPOINT_ROOT: /opt/finstream/checkpoints
+      LAKE_URI: file:///opt/finstream/data/lake
+    volumes:
+      - ./:/opt/finstream
+      - spark-checkpoints:/opt/finstream/checkpoints
+      - lake-data:/opt/finstream/data
+    command:
+      - /opt/spark/bin/spark-submit
+      - --master
+      - local[1]
+      - --conf
+      - spark.jars.ivy=/tmp/spark-ivy
+      - --packages
+      - org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.7,org.apache.spark:spark-avro_2.12:3.5.7
+      - streaming/spark/jobs/transaction_stream.py
+    mem_limit: 2048m
+    cpus: 1.5
+    networks: [finstream]
+
+  airflow-init:
+    image: apache/airflow:3.4.0-python3.11
+    profiles: [airflow]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: &airflow-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${DATABASE_URL:?set DATABASE_URL in .env}
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    volumes:
+      - ./orchestration/airflow/dags:/opt/airflow/dags:ro
+      - ./orchestration/airflow/include:/opt/airflow/include:ro
+    command: ["bash", "-ec", "airflow db migrate"]
+    restart: "no"
+    mem_limit: 768m
+    cpus: 0.5
+    networks: [finstream]
+
+  airflow-api-server:
+    image: apache/airflow:3.4.0-python3.11
+    profiles: [airflow]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *airflow-env
+    volumes:
+      - ./orchestration/airflow/dags:/opt/airflow/dags:ro
+      - ./orchestration/airflow/include:/opt/airflow/include:ro
+    command: api-server
+    ports: ["8080:8080"]
+    mem_limit: 1024m
+    cpus: 0.75
+    networks: [finstream]
+
+  airflow-scheduler:
+    image: apache/airflow:3.4.0-python3.11
+    profiles: [airflow]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *airflow-env
+    volumes:
+      - ./orchestration/airflow/dags:/opt/airflow/dags:ro
+      - ./orchestration/airflow/include:/opt/airflow/include:ro
+    command: scheduler
+    mem_limit: 1024m
+    cpus: 0.75
+    networks: [finstream]
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    profiles: [monitoring]
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-7d}"]
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    ports: ["9090:9090"]
+    mem_limit: 512m
+    cpus: 0.5
+    networks: [finstream]
+
+  grafana:
+    image: grafana/grafana:11.5.1
+    profiles: [monitoring]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set Grafana password in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
+    mem_limit: 512m
+    cpus: 0.5
+    networks: [finstream]
+
+volumes:
+  postgres-data:
+  kafka-data:
+  spark-checkpoints:
+  lake-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  finstream:
+    driver: bridge

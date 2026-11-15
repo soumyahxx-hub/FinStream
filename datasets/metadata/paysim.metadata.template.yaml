@@ -1,0 +1,9 @@
+source_system: paysim
+source_url: https://www.kaggle.com/datasets/ealaxi/paysim1
+acquired_at: null
+file_sha256: null
+license_reviewed: false
+simulation_epoch_utc: null
+source_record_identity: null
+profiling_status: not_started
+notes: Preserve original identifiers and keep raw files outside Git.

@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: staging
+    schema: staging
+    description: Validated canonical transaction records loaded from the data lake.
+    tables:
+      - name: transactions
+        description: >
+          Canonical transaction records ingested from validated Parquet data.
+          Historical fraud labels are source-provided labels, not generated alerts.
+
+  - name: core
+    schema: core
+    description: Operational application data.
+    tables:
+      - name: fraud_alerts
+        description: Generated operational fraud alerts, separate from historical labels.

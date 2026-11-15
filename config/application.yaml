@@ -1,0 +1,28 @@
+application:
+  name: finstream
+  environment: ${ENVIRONMENT:-development}
+  event_contract_version: 1
+reliability:
+  event_identity: source_system + source_record_id + simulation_id
+  producer:
+    acks: all
+    enable_idempotence: true
+    retries: 5
+    delivery_timeout_ms: 120000
+  deduplication:
+    watermark: 15 minutes
+    keys: [event_id]
+  dead_letter_topic: transactions.dead-letter
+  checkpoint_root: ${SPARK_CHECKPOINT_ROOT:-/opt/finstream/checkpoints}
+fraud_detection:
+  input_topic: transactions.validated
+  output_topic: fraud.alerts
+  dead_letter_topic: transactions.dead-letter
+  consumer_group: ${KAFKA_FRAUD_GROUP_ID:-finstream-fraud-detection-v1}
+  max_processing_attempts: ${FRAUD_MAX_PROCESSING_ATTEMPTS:-3}
+  delivery: At-least-once; database and Kafka have no shared transaction.
+storage:
+  lake_format: parquet
+  lake_uri: ${LAKE_URI:-file:///opt/finstream/data/lake}
+  postgres_is_operational_store: true
+  iceberg_status: evaluated_later

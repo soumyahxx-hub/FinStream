@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "DeadLetterEvent",
+  "namespace": "io.finstream.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "failed_at", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "stage", "type": "string"},
+    {"name": "attempt_count", "type": "int"},
+    {"name": "error_type", "type": "string"},
+    {"name": "error_message", "type": "string"},
+    {"name": "original_payload_json", "type": "string"},
+    {"name": "replay_authorized", "type": "boolean", "default": false}
+  ]
+}
